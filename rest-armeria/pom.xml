@@ -10,18 +10,6 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>kafka-streams-rest-armeria</artifactId>
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>16</source>
-          <target>16</target>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 
   <dependencies>
     <dependency>
@@ -36,10 +24,5 @@
       <version>1.11.0</version>
     </dependency>
   </dependencies>
-
-  <properties>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-  </properties>
 
 </project>

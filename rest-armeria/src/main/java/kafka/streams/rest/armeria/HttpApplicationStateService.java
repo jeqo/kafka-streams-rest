@@ -19,25 +19,43 @@ public final class HttpApplicationStateService {
     return HttpResponse.ofJson(service.state().asJson());
   }
 
+  @Get("/config")
+  public HttpResponse config() {
+    return HttpResponse.ofJson(service.config().asJson());
+  }
+
+  @Get("/topology")
+  public HttpResponse topology() {
+    return HttpResponse.of(service.topology().description());
+  }
+
   @Post("/start")
   public HttpResponse start() {
-    if (service.state().isRunningOrRebalancing()) {
-      return HttpResponse.ofJson(HttpStatus.CONFLICT,
-          new ErrorResponse("Application is already running.").asJson());
-    } else {
+    try {
       service.start();
       return HttpResponse.of(HttpStatus.OK);
+    } catch (IllegalStateException e) {
+      return HttpResponse.ofJson(HttpStatus.CONFLICT, new ErrorResponse(e.getMessage()).asJson());
     }
   }
 
   @Post("/stop")
   public HttpResponse stop() {
-    if (!service.state().isRunningOrRebalancing()) {
-      return HttpResponse.ofJson(HttpStatus.CONFLICT,
-          new ErrorResponse("Application is not running.").asJson());
-    } else {
+    try {
       service.stop();
       return HttpResponse.of(HttpStatus.OK);
+    } catch (IllegalStateException e) {
+      return HttpResponse.ofJson(HttpStatus.CONFLICT, new ErrorResponse(e.getMessage()).asJson());
+    }
+  }
+
+  @Post("/restart")
+  public HttpResponse restart() {
+    try {
+      service.restart();
+      return HttpResponse.of(HttpStatus.OK);
+    } catch (IllegalStateException e) {
+      return HttpResponse.ofJson(HttpStatus.CONFLICT, new ErrorResponse(e.getMessage()).asJson());
     }
   }
 }

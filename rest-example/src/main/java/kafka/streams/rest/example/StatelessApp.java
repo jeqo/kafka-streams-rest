@@ -15,7 +15,7 @@ public class StatelessApp {
     var kafkaStreams = new KafkaStreams(app.topology(), app.config());
     kafkaStreams.start();
     var server = new HttpKafkaStreamsServer(app.topology(), app.config());
-    server.startServerAndApplication();
+    server.startApplicationAndServer();
   }
 
   private Properties config() {
