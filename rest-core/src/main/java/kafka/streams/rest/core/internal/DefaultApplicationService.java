@@ -36,7 +36,7 @@ public class DefaultApplicationService implements ApplicationStateService {
     if (kafkaStreams != null && state().isRunningOrRebalancing()) {
       throw new IllegalStateException("Application is already running.");
     } else {
-      kafkaStreams = new KafkaStreams(topology, streamsConfig);
+      build();
       kafkaStreams.start();
     }
   }
@@ -53,7 +53,15 @@ public class DefaultApplicationService implements ApplicationStateService {
     if (state().isRunningOrRebalancing()) {
       kafkaStreams.close();
     }
-    kafkaStreams = new KafkaStreams(topology, streamsConfig);
+    build();
     kafkaStreams.start();
+  }
+
+  @Override public KafkaStreams kafkaStreams() {
+    return kafkaStreams;
+  }
+
+  private void build() {
+    kafkaStreams = new KafkaStreams(topology, streamsConfig);
   }
 }

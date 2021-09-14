@@ -1,5 +1,7 @@
 package kafka.streams.rest.core;
 
+import org.apache.kafka.streams.KafkaStreams;
+
 public interface ApplicationStateService {
 
   // Queries
@@ -11,4 +13,6 @@ public interface ApplicationStateService {
   void start();
   void stop();
   void restart();
+
+  KafkaStreams kafkaStreams();
 }
