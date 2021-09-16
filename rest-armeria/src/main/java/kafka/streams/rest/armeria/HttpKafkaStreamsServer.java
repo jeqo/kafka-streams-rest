@@ -13,9 +13,9 @@ public class HttpKafkaStreamsServer extends KafkaStreamsService {
 
   Server server;
 
-  public HttpKafkaStreamsServer(Topology topology, Properties streamsConfig) {
+  public HttpKafkaStreamsServer(Topology topology, Properties streamsConfig, int port) {
     super(topology, streamsConfig);
-    serverBuilder = Server.builder().http(8080);
+    serverBuilder = Server.builder().http(port);
     serverBuilder
         .annotatedService("/application", new HttpApplicationStateService(applicationService()))
         .serviceUnder("/docs", DocService.builder()

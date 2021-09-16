@@ -18,7 +18,7 @@ public class StatefulApp {
     var app = new StatefulApp();
 //    var kafkaStreams = new KafkaStreams(app.topology(), app.config());
 //    kafkaStreams.start();
-    var server = new HttpKafkaStreamsServer(app.topology(), app.config());
+    var server = new HttpKafkaStreamsServer(app.topology(), app.config(), 8001);
     server.addKeyValueStateStoreService("input-table");
     server.startApplicationAndServer();
   }

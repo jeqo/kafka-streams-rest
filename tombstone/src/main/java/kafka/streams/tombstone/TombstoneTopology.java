@@ -1,5 +1,6 @@
 package kafka.streams.tombstone;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.function.Supplier;
 import org.apache.kafka.common.serialization.Serdes;
@@ -14,6 +15,7 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.Stores;
 
 public class TombstoneTopology implements Supplier<Topology> {
 
@@ -31,13 +33,19 @@ public class TombstoneTopology implements Supplier<Topology> {
   @Override
   public Topology get() {
     final var builder = new StreamsBuilder();
-    builder.stream(sourceTopic, Consumed.with(Serdes.ByteArray(), Serdes.Bytes()))
+    builder.addStateStore(Stores.keyValueStoreBuilder(
+        Stores.persistentKeyValueStore(sourceTopic),
+        Serdes.ByteBuffer(),
+        Serdes.Long()
+    ));
+
+    builder.stream(sourceTopic, Consumed.with(Serdes.ByteBuffer(), Serdes.Bytes()))
         .transform(() ->
-            new TtlEmitter<byte[], Bytes, KeyValue<byte[], Bytes>>(
+            new TtlEmitter<ByteBuffer, Bytes, KeyValue<ByteBuffer, Bytes>>(
                 maxAge, scanFrequency, sourceTopic
             ),
             sourceTopic)
-        .to(sourceTopic, Produced.with(Serdes.ByteArray(), Serdes.Bytes())); // write the
+        .to(sourceTopic, Produced.with(Serdes.ByteBuffer(), Serdes.Bytes())); // write the
     // tombstones back
     // out to the input
     // topic

@@ -12,9 +12,9 @@ public class StatelessApp {
 
   public static void main(String[] args) {
     var app = new StatelessApp();
-    var kafkaStreams = new KafkaStreams(app.topology(), app.config());
-    kafkaStreams.start();
-    var server = new HttpKafkaStreamsServer(app.topology(), app.config());
+//    var kafkaStreams = new KafkaStreams(app.topology(), app.config());
+//    kafkaStreams.start();
+    var server = new HttpKafkaStreamsServer(app.topology(), app.config(), 8002);
     server.startApplicationAndServer();
   }
 
