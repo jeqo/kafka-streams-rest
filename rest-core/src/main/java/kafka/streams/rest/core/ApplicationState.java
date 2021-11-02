@@ -12,7 +12,8 @@ public record ApplicationState(
   static final ObjectMapper jsonMapper = new ObjectMapper();
 
   public static ApplicationState build(KafkaStreams kafkaStreams) {
-    return new ApplicationState(kafkaStreams.state().name(), kafkaStreams.state().isRunningOrRebalancing());
+    return new ApplicationState(kafkaStreams.state().name(),
+        kafkaStreams.state().isRunningOrRebalancing());
   }
 
   public JsonNode asJson() {

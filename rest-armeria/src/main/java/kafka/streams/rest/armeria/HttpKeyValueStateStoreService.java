@@ -11,7 +11,10 @@ import java.util.UUID;
 import kafka.streams.rest.core.KeyValueStateStoreService;
 import org.apache.kafka.common.utils.Bytes;
 
-public class HttpKeyValueStateStoreService<K> {
+/**
+ * Expose Kafka Streams Key Value state stores as HTTP service.
+ */
+final class HttpKeyValueStateStoreService<K> {
 
   final KeyValueStateStoreService<K> service;
   final Class<K> keyClass;
@@ -23,38 +26,39 @@ public class HttpKeyValueStateStoreService<K> {
 
   @Get("/")
   public HttpResponse info() {
-    return HttpResponse.ofJson(service.info());
+    return HttpResponse.ofJson(service.info().asJson());
   }
 
-  @Get("/{key}") //TODO replace with context and obtain at runtime.
+  @Get("/{key}")
   public HttpResponse checkKey(@Param("key") String key) {
     if (keyClass == String.class) {
-      return HttpResponse.ofJson(service.checkKey((K) key));
+      return HttpResponse.ofJson(service.keyFound((K) key).asJson());
     } else if (keyClass == Integer.class) {
       final Integer intKey = Integer.parseInt(key);
-      return HttpResponse.ofJson(service.checkKey((K) intKey));
+      return HttpResponse.ofJson(service.keyFound((K) intKey).asJson());
     } else if (keyClass == Short.class) {
       final Short shortKey = Short.parseShort(key);
-      return HttpResponse.ofJson(service.checkKey((K) shortKey));
+      return HttpResponse.ofJson(service.keyFound((K) shortKey).asJson());
     } else if (keyClass == Double.class) {
       final Double doubleKey = Double.parseDouble(key);
-      return HttpResponse.ofJson(service.checkKey((K) doubleKey));
+      return HttpResponse.ofJson(service.keyFound((K) doubleKey).asJson());
     } else if (keyClass == Float.class) {
       final Float floatKey = Float.parseFloat(key);
-      return HttpResponse.ofJson(service.checkKey((K) floatKey));
+      return HttpResponse.ofJson(service.keyFound((K) floatKey).asJson());
     } else if (keyClass == Long.class) {
       final Long longKey = Long.parseLong(key);
-      return HttpResponse.ofJson(service.checkKey((K) longKey));
+      return HttpResponse.ofJson(service.keyFound((K) longKey).asJson());
     } else if (keyClass == UUID.class) {
-      return HttpResponse.ofJson(service.checkKey((K) UUID.fromString(key)));
+      return HttpResponse.ofJson(service.keyFound((K) UUID.fromString(key)).asJson());
     } else if (keyClass == byte[].class) {
-      return HttpResponse.ofJson(service.checkKey((K) key.getBytes(StandardCharsets.UTF_8)));
+      return HttpResponse.ofJson(
+          service.keyFound((K) key.getBytes(StandardCharsets.UTF_8)).asJson());
     } else if (keyClass == Bytes.class) {
       return HttpResponse.ofJson(
-          service.checkKey((K) Bytes.wrap(key.getBytes(StandardCharsets.UTF_8))));
+          service.keyFound((K) Bytes.wrap(key.getBytes(StandardCharsets.UTF_8))).asJson());
     } else if (keyClass == ByteBuffer.class) {
       return HttpResponse.ofJson(
-          service.checkKey((K) ByteBuffer.wrap(key.getBytes(StandardCharsets.UTF_8))));
+          service.keyFound((K) ByteBuffer.wrap(key.getBytes(StandardCharsets.UTF_8))).asJson());
     } else {
       return HttpResponse.of(HttpStatus.CONFLICT, MediaType.ANY_TEXT_TYPE,
           "Key %s (type: %s) is not supported".formatted(key, keyClass.getName()));

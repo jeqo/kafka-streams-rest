@@ -1,9 +1,16 @@
 package kafka.streams.rest.core;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 public interface KeyValueStateStoreService<K> {
-  JsonNode checkKey(K key);
 
-  JsonNode info();
+  /**
+   * @return Key Value store information
+   */
+  KeyValueStateStoreInfo info();
+
+  /**
+   * Check if the key is found on the state store.
+   *
+   * @return whether key is found or not.
+   */
+  KeyFoundResponse keyFound(K key);
 }

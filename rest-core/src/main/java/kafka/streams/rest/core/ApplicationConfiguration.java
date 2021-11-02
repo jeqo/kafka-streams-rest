@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Properties;
 
 public record ApplicationConfiguration(@JsonProperty("configs") Map<String, String> configs) {
+
   static final ObjectMapper jsonMapper = new ObjectMapper();
 
   public static ApplicationConfiguration build(Properties properties) {

@@ -6,7 +6,10 @@ import com.linecorp.armeria.server.annotation.Get;
 import com.linecorp.armeria.server.annotation.Post;
 import kafka.streams.rest.core.ApplicationStateService;
 
-public final class HttpApplicationStateService {
+/**
+ * Expose Kafka Streams application state as HTTP service.
+ */
+final class HttpApplicationStateService {
 
   final ApplicationStateService service;
 

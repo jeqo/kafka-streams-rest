@@ -9,6 +9,7 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Consumed;
+import org.apache.kafka.streams.kstream.Named;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
@@ -17,7 +18,7 @@ import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.Stores;
 
-public class TombstoneTopology implements Supplier<Topology> {
+class TombstoneTopology implements Supplier<Topology> {
 
   private final Duration maxAge;
   private final Duration scanFrequency;
@@ -39,20 +40,17 @@ public class TombstoneTopology implements Supplier<Topology> {
         Serdes.Long()
     ));
 
-    builder.stream(sourceTopic, Consumed.with(Serdes.ByteBuffer(), Serdes.Bytes()))
+    builder.stream(sourceTopic, Consumed.with(Serdes.ByteBuffer(), Serdes.Bytes()).withName("read-table-source"))
         .transform(() ->
-            new TtlEmitter<ByteBuffer, Bytes, KeyValue<ByteBuffer, Bytes>>(
-                maxAge, scanFrequency, sourceTopic
-            ),
-            sourceTopic)
-        .to(sourceTopic, Produced.with(Serdes.ByteBuffer(), Serdes.Bytes())); // write the
-    // tombstones back
-    // out to the input
-    // topic
+                new TtlEmitter<ByteBuffer, Bytes, KeyValue<ByteBuffer, Void>>(
+                    maxAge, scanFrequency, sourceTopic
+                ),
+            Named.as("process-ttl-checks"), sourceTopic)
+        .to(sourceTopic, Produced.with(Serdes.ByteBuffer(), Serdes.Void()).withName("write-tombstone-back"));
     return builder.build();
   }
 
-  public class TtlEmitter<K, V, R> implements Transformer<K, V, R> {
+  public static class TtlEmitter<K, V, R> implements Transformer<K, V, R> {
 
     private final Duration maxAge;
     private final Duration scanFrequency;
@@ -62,10 +60,10 @@ public class TombstoneTopology implements Supplier<Topology> {
 
 
     /**
-     * From https://kafka-tutorials.confluent.io/schedule-ktable-ttl/kstreams.html
-     * @param maxAge
-     * @param scanFrequency
-     * @param stateStoreName
+     * Based on https://kafka-tutorials.confluent.io/schedule-ktable-ttl/kstreams.html
+     * @param maxAge how old key messages can be. Older messages are candidates to be removed with tombstone.
+     * @param scanFrequency how often to check key's age.
+     * @param stateStoreName name for internal state store containing keys and timestamps.
      */
     public TtlEmitter(
         final Duration maxAge,
@@ -119,10 +117,8 @@ public class TombstoneTopology implements Supplier<Topology> {
       // this gets invoked for each new record we consume. If it's a tombstone, delete
       // it from our state store. Otherwise, store the record timestamp.
       if (value == null) {
-        System.out.println("CLEANING key="+key);
         stateStore.delete(key);
       } else {
-        System.out.println("UPDATING key="+key);
         stateStore.put(key, context.timestamp());
       }
       return null; // no need to return anything here. the punctuator will emit the tombstones

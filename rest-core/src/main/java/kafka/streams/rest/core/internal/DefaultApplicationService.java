@@ -20,19 +20,23 @@ public class DefaultApplicationService implements ApplicationStateService {
     this.streamsConfig = streamsConfig;
   }
 
-  @Override public ApplicationState state() {
+  @Override
+  public ApplicationState state() {
     return ApplicationState.build(kafkaStreams);
   }
 
-  @Override public ApplicationConfiguration config() {
+  @Override
+  public ApplicationConfiguration config() {
     return ApplicationConfiguration.build(streamsConfig);
   }
 
-  @Override public ApplicationTopology topology() {
+  @Override
+  public ApplicationTopology topology() {
     return ApplicationTopology.build(topology);
   }
 
-  @Override public void start() {
+  @Override
+  public void start() {
     if (kafkaStreams != null && state().isRunningOrRebalancing()) {
       throw new IllegalStateException("Application is already running.");
     } else {
@@ -41,7 +45,8 @@ public class DefaultApplicationService implements ApplicationStateService {
     }
   }
 
-  @Override public void stop() {
+  @Override
+  public void stop() {
     if (!state().isRunningOrRebalancing()) {
       throw new IllegalStateException("Application is not running");
     } else {
@@ -49,7 +54,8 @@ public class DefaultApplicationService implements ApplicationStateService {
     }
   }
 
-  @Override public void restart() {
+  @Override
+  public void restart() {
     if (state().isRunningOrRebalancing()) {
       kafkaStreams.close();
     }
@@ -57,7 +63,8 @@ public class DefaultApplicationService implements ApplicationStateService {
     kafkaStreams.start();
   }
 
-  @Override public KafkaStreams kafkaStreams() {
+  @Override
+  public KafkaStreams kafkaStreams() {
     return kafkaStreams;
   }
 

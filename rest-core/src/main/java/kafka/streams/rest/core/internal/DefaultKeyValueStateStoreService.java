@@ -1,18 +1,15 @@
 package kafka.streams.rest.core.internal;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.function.Supplier;
+import kafka.streams.rest.core.KeyFoundResponse;
+import kafka.streams.rest.core.KeyValueStateStoreInfo;
 import kafka.streams.rest.core.KeyValueStateStoreService;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StoreQueryParameters;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 
-import java.util.function.Supplier;
-
 public class DefaultKeyValueStateStoreService<K> implements KeyValueStateStoreService<K> {
-
-  private final ObjectMapper jsonMapper = new ObjectMapper();
 
   final Supplier<KafkaStreams> kafkaStreams;
   final String storeName;
@@ -22,21 +19,18 @@ public class DefaultKeyValueStateStoreService<K> implements KeyValueStateStoreSe
     this.storeName = storeName;
   }
 
-  @Override public JsonNode checkKey(K key) {
-    final var v = store().get(key);
-    return jsonMapper.createObjectNode().put("found", v != null);
+  @Override
+  public KeyFoundResponse keyFound(K key) {
+    return new KeyFoundResponse(store().get(key) != null);
   }
 
-  // TODO handle key type
   private ReadOnlyKeyValueStore<K, ?> store() {
     return kafkaStreams.get().store(
         StoreQueryParameters.fromNameAndType(storeName, QueryableStoreTypes.keyValueStore()));
   }
 
   @Override
-  public JsonNode info() {
-    return jsonMapper.createObjectNode()
-            .put("storeName", storeName)
-            .put("approximatedNumEntries", store().approximateNumEntries());
+  public KeyValueStateStoreInfo info() {
+    return new KeyValueStateStoreInfo(storeName, store().approximateNumEntries());
   }
 }
