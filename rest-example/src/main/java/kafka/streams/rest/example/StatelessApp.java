@@ -2,7 +2,10 @@ package kafka.streams.rest.example;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+
 import kafka.streams.rest.armeria.HttpKafkaStreamsServer;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
@@ -13,7 +16,7 @@ public class StatelessApp {
     var app = new StatelessApp();
 //    var kafkaStreams = new KafkaStreams(app.topology(), app.config());
 //    kafkaStreams.start();
-    var server = new HttpKafkaStreamsServer(app.topology(), app.config(), 8002);
+    var server = new HttpKafkaStreamsServer(app.topology(), app.config(), 8002, Map.of());
     server.startApplicationAndServer();
   }
 

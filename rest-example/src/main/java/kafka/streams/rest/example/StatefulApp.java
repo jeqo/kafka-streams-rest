@@ -18,14 +18,16 @@ public class StatefulApp {
     var app = new StatefulApp();
 //    var kafkaStreams = new KafkaStreams(app.topology(), app.config());
 //    kafkaStreams.start();
-    var server = new HttpKafkaStreamsServer(app.topology(), app.config(), 8001);
-    server.addKeyValueStateStoreService("input-table");
-    server.startApplicationAndServer();
+    HttpKafkaStreamsServer.newBuilder()
+            .addServiceForKeyValueStore("input-table")
+            .port(8001)
+            .build(app.topology(), app.config())
+            .startApplicationAndServer();
   }
 
   private Properties config() {
     var props = new Properties();
-    try (final var inputStream = new FileInputStream("src/main/resources/streams.properties")) {
+    try (final var inputStream = new FileInputStream("rest-example/src/main/resources/streams.properties")) {
       props.load(inputStream);
     } catch (IOException e) {
       e.printStackTrace();
