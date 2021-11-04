@@ -103,8 +103,8 @@ class TombstoneTopology implements Supplier<Topology> {
           while (all.hasNext()) {
             final KeyValue<K, Long> record = all.next();
             if (record.value != null && record.value < cutoff) {
-              System.out.println("Forwarding Null");
               // if a record's last update was older than our cutoff, emit a tombstone.
+              context.headers().add("tombstone", "1".getBytes());
               context.forward(record.key, null);
             }
           }

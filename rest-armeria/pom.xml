@@ -21,7 +21,12 @@
     <dependency>
       <groupId>com.linecorp.armeria</groupId>
       <artifactId>armeria</artifactId>
-      <version>1.11.0</version>
+      <version>1.13.2</version>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+      <version>1.7.5</version>
     </dependency>
   </dependencies>
 

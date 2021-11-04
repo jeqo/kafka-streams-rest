@@ -1,8 +1,14 @@
 package kafka.streams.rest.armeria;
 
+import com.linecorp.armeria.common.HttpResponse;
 import com.linecorp.armeria.server.Server;
 import com.linecorp.armeria.server.ServerBuilder;
 import com.linecorp.armeria.server.docs.DocService;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.binder.kafka.KafkaStreamsMetrics;
+import io.micrometer.prometheus.PrometheusConfig;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.prometheus.client.exporter.common.TextFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -20,14 +26,18 @@ public final class HttpKafkaStreamsServer {
 
   final ServerBuilder serverBuilder;
 
+  final boolean prometheusMetricsEnabled;
+
   Server server;
 
   public HttpKafkaStreamsServer(final Topology topology,
       final Properties streamsConfig,
       final int port,
+      final boolean prometheusMetricsEnabled,
       final Map<String, Class<?>> kvStoreNames) {
     this.kvStoreNames = kvStoreNames;
     this.applicationService = new DefaultApplicationService(topology, streamsConfig);
+    this.prometheusMetricsEnabled = prometheusMetricsEnabled;
     this.serverBuilder = Server.builder()
         .http(port)
         .annotatedService("/application", new HttpApplicationStateService(applicationService))
@@ -45,12 +55,23 @@ public final class HttpKafkaStreamsServer {
   public void startApplicationAndServer() {
     applicationService.start();
 
-    kvStoreNames.forEach((store, keyClass) -> serverBuilder.annotatedService(
-        "/stores/key-value/" + store,
-        new HttpKeyValueStateStoreService<>(new DefaultKeyValueStateStoreService<>(
-            applicationService::kafkaStreams,
-            store), keyClass)
-    ));
+    var prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+    Metrics.addRegistry(prometheusRegistry);
+    new KafkaStreamsMetrics(applicationService.kafkaStreams()).bindTo(prometheusRegistry);
+
+    kvStoreNames.forEach((store, keyClass) ->
+        serverBuilder.annotatedService(
+            "/stores/key-value/" + store,
+            new HttpKeyValueStateStoreService<>(new DefaultKeyValueStateStoreService<>(
+                applicationService::kafkaStreams,
+                store), keyClass))
+    );
+    if (prometheusMetricsEnabled) {
+      serverBuilder.service(
+          "/metrics",
+          (ctx, req) ->
+              HttpResponse.of(prometheusRegistry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100)));
+    }
     this.server = serverBuilder.build();
 
     server.start();
@@ -63,8 +84,10 @@ public final class HttpKafkaStreamsServer {
 
   public static class Builder {
 
-    private int port = 8000;
+    int port = 8000;
     Map<String, Class<?>> keyValueStoreNames = new LinkedHashMap<>();
+
+    boolean prometheusMetricsEnabled = true;
 
     public Builder port(int port) {
       this.port = port;
@@ -81,8 +104,16 @@ public final class HttpKafkaStreamsServer {
       return this;
     }
 
+    public Builder prometheusMetricsEnabled(boolean enable) {
+      this.prometheusMetricsEnabled = enable;
+      return this;
+    }
+
     public HttpKafkaStreamsServer build(Topology topology, Properties configs) {
-      return new HttpKafkaStreamsServer(topology, configs, port, keyValueStoreNames);
+      return new HttpKafkaStreamsServer(topology, configs,
+          port,
+          prometheusMetricsEnabled,
+          keyValueStoreNames);
     }
   }
 }
