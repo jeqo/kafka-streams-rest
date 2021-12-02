@@ -55,10 +55,6 @@ public final class HttpKafkaStreamsServer {
   public void startApplicationAndServer() {
     applicationService.start();
 
-    var prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-    Metrics.addRegistry(prometheusRegistry);
-    new KafkaStreamsMetrics(applicationService.kafkaStreams()).bindTo(prometheusRegistry);
-
     kvStoreNames.forEach((store, keyClass) ->
         serverBuilder.annotatedService(
             "/stores/key-value/" + store,
@@ -67,6 +63,10 @@ public final class HttpKafkaStreamsServer {
                 store), keyClass))
     );
     if (prometheusMetricsEnabled) {
+      var prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+      Metrics.addRegistry(prometheusRegistry);
+      new KafkaStreamsMetrics(applicationService.kafkaStreams()).bindTo(prometheusRegistry);
+
       serverBuilder.service(
           "/metrics",
           (ctx, req) ->
