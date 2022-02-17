@@ -5,6 +5,11 @@ import com.linecorp.armeria.server.Server;
 import com.linecorp.armeria.server.ServerBuilder;
 import com.linecorp.armeria.server.docs.DocService;
 import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmHeapPressureMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmInfoMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
 import io.micrometer.core.instrument.binder.kafka.KafkaStreamsMetrics;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
@@ -65,6 +70,13 @@ public final class HttpKafkaStreamsServer {
     if (prometheusMetricsEnabled) {
       var prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
       Metrics.addRegistry(prometheusRegistry);
+      // JVM metrics
+      new JvmInfoMetrics().bindTo(prometheusRegistry);
+      new JvmThreadMetrics().bindTo(prometheusRegistry);
+      new JvmGcMetrics().bindTo(prometheusRegistry);
+      new JvmMemoryMetrics().bindTo(prometheusRegistry);
+      new JvmHeapPressureMetrics().bindTo(prometheusRegistry);
+      // Kafka Streams metrics
       new KafkaStreamsMetrics(applicationService.kafkaStreams()).bindTo(prometheusRegistry);
 
       serverBuilder.service(
