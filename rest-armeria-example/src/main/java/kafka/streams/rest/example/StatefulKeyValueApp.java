@@ -12,10 +12,10 @@ import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.Stores;
 
-public class StatefulApp {
+public class StatefulKeyValueApp {
 
   public static void main(String[] args) {
-    var app = new StatefulApp();
+    var app = new StatefulKeyValueApp();
 //    var kafkaStreams = new KafkaStreams(app.topology(), app.config());
 //    kafkaStreams.start();
     HttpKafkaStreamsServer.newBuilder()

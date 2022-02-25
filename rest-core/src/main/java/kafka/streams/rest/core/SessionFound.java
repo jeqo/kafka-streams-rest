@@ -3,11 +3,13 @@ package kafka.streams.rest.core;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import org.apache.kafka.streams.kstream.Window;
 
-public record KeyFoundResponse(
+public record SessionFound(
     @JsonProperty("key") Object key,
-    @JsonProperty("found") boolean found
-) {
+    @JsonProperty("window") List<Window> windows
+    ) {
 
   static final ObjectMapper jsonMapper = new ObjectMapper();
 

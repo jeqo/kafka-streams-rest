@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.Properties;
 import kafka.streams.rest.core.internal.DefaultApplicationService;
 import kafka.streams.rest.core.internal.DefaultKeyValueStateStoreService;
+import kafka.streams.rest.core.internal.DefaultSessionStateStoreService;
+import kafka.streams.rest.core.internal.DefaultWindowStateStoreService;
 import org.apache.kafka.streams.Topology;
 
 /**
@@ -28,6 +30,8 @@ public final class HttpKafkaStreamsServer {
 
   final DefaultApplicationService applicationService;
   final Map<String, Class<?>> kvStoreNames;
+  final Map<String, Class<?>> windowStoreNames;
+  final Map<String, Class<?>> sessionStoreNames;
 
   final ServerBuilder serverBuilder;
 
@@ -35,12 +39,18 @@ public final class HttpKafkaStreamsServer {
 
   Server server;
 
-  public HttpKafkaStreamsServer(final Topology topology,
+  public HttpKafkaStreamsServer(
+      final Topology topology,
       final Properties streamsConfig,
       final int port,
       final boolean prometheusMetricsEnabled,
-      final Map<String, Class<?>> kvStoreNames) {
+      final Map<String, Class<?>> kvStoreNames,
+      final Map<String, Class<?>> windowStoreNames,
+      final Map<String, Class<?>> sessionStoreNames
+  ) {
     this.kvStoreNames = kvStoreNames;
+    this.windowStoreNames = windowStoreNames;
+    this.sessionStoreNames = sessionStoreNames;
     this.applicationService = new DefaultApplicationService(topology, streamsConfig);
     this.prometheusMetricsEnabled = prometheusMetricsEnabled;
     this.serverBuilder = Server.builder()
@@ -63,9 +73,29 @@ public final class HttpKafkaStreamsServer {
     kvStoreNames.forEach((store, keyClass) ->
         serverBuilder.annotatedService(
             "/stores/key-value/" + store,
-            new HttpKeyValueStateStoreService<>(new DefaultKeyValueStateStoreService<>(
-                applicationService::kafkaStreams,
-                store), keyClass))
+            new HttpKeyValueStateStoreService<>(
+                new DefaultKeyValueStateStoreService<>(applicationService::kafkaStreams, store),
+                keyClass
+            )
+        )
+    );
+    windowStoreNames.forEach((store, keyClass) ->
+        serverBuilder.annotatedService(
+            "/stores/window/" + store,
+            new HttpWindowStateStoreService<>(
+                new DefaultWindowStateStoreService<>(applicationService::kafkaStreams, store),
+                keyClass
+            )
+        )
+    );
+    sessionStoreNames.forEach((store, keyClass) ->
+        serverBuilder.annotatedService(
+            "/stores/session/" + store,
+            new HttpSessionStateStoreService<>(
+                new DefaultSessionStateStoreService<>(applicationService::kafkaStreams, store),
+                keyClass
+            )
+        )
     );
     if (prometheusMetricsEnabled) {
       var prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
@@ -98,6 +128,8 @@ public final class HttpKafkaStreamsServer {
 
     int port = 8000;
     Map<String, Class<?>> keyValueStoreNames = new LinkedHashMap<>();
+    Map<String, Class<?>> windowStoreNames = new LinkedHashMap<>();
+    Map<String, Class<?>> sessionStoreNames = new LinkedHashMap<>();
 
     boolean prometheusMetricsEnabled = true;
 
@@ -116,16 +148,40 @@ public final class HttpKafkaStreamsServer {
       return this;
     }
 
+    public Builder addServiceForWindowStore(String storeName) {
+      this.windowStoreNames.put(storeName, String.class);
+      return this;
+    }
+
+    public Builder addServiceForWindowStore(String storeName, Class<?> keyClass) {
+      this.windowStoreNames.put(storeName, keyClass);
+      return this;
+    }
+
+    public Builder addServiceForSessionStore(String storeName) {
+      this.sessionStoreNames.put(storeName, String.class);
+      return this;
+    }
+
+    public Builder addServiceForSessionStore(String storeName, Class<?> keyClass) {
+      this.sessionStoreNames.put(storeName, keyClass);
+      return this;
+    }
+
     public Builder prometheusMetricsEnabled(boolean enable) {
       this.prometheusMetricsEnabled = enable;
       return this;
     }
 
     public HttpKafkaStreamsServer build(Topology topology, Properties configs) {
-      return new HttpKafkaStreamsServer(topology, configs,
+      return new HttpKafkaStreamsServer(
+          topology, configs,
           port,
           prometheusMetricsEnabled,
-          keyValueStoreNames);
+          keyValueStoreNames,
+          windowStoreNames,
+          sessionStoreNames
+      );
     }
   }
 }

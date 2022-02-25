@@ -21,7 +21,7 @@ public class DefaultKeyValueStateStoreService<K> implements KeyValueStateStoreSe
 
   @Override
   public KeyFoundResponse keyFound(K key) {
-    return new KeyFoundResponse(store().get(key) != null);
+    return new KeyFoundResponse(key, store().get(key) != null);
   }
 
   private ReadOnlyKeyValueStore<K, ?> store() {

@@ -4,10 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public record KeyFoundResponse(
-    @JsonProperty("key") Object key,
-    @JsonProperty("found") boolean found
-) {
+public record StateStoreInfo(@JsonProperty("storeName") String storeName) {
 
   static final ObjectMapper jsonMapper = new ObjectMapper();
 
