@@ -4,22 +4,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import kafka.streams.rest.core.KeyFoundResponse;
-import kafka.streams.rest.core.KeyValueStateStoreInfo;
-import kafka.streams.rest.core.KeyValueStateStoreService;
 import kafka.streams.rest.core.SessionFound;
 import kafka.streams.rest.core.SessionFoundResponse;
 import kafka.streams.rest.core.SessionStateStoreService;
 import kafka.streams.rest.core.SessionsFoundResponse;
 import kafka.streams.rest.core.StateStoreInfo;
+import kafka.streams.rest.core.Window;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StoreQueryParameters;
-import org.apache.kafka.streams.kstream.Window;
-import org.apache.kafka.streams.kstream.Windowed;
-import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
-import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.ReadOnlySessionStore;
 
 public class DefaultSessionStateStoreService<K> implements SessionStateStoreService<K> {
@@ -45,7 +38,7 @@ public class DefaultSessionStateStoreService<K> implements SessionStateStoreServ
       found = fetch.hasNext();
       while (fetch.hasNext()) {
         var entry = fetch.next();
-        windows.add(entry.key.window());
+        windows.add(Window.from(entry.key.window()));
       }
     }
     return new SessionFoundResponse(found, new SessionFound(key, windows));
@@ -62,13 +55,13 @@ public class DefaultSessionStateStoreService<K> implements SessionStateStoreServ
         sessions.computeIfPresent(
             entry.key.key(),
             (k, sessionsFound) -> {
-              sessionsFound.add(entry.key.window());
+              sessionsFound.add(Window.from(entry.key.window()));
               return sessionsFound;
             });
         sessions.computeIfAbsent(entry.key.key(),
             k -> {
               var list = new ArrayList<Window>();
-              list.add(entry.key.window());
+              list.add(Window.from(entry.key.window()));
               return list;
             });
       }

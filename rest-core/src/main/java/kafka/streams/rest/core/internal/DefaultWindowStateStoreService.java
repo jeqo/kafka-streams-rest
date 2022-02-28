@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.Supplier;
 import kafka.streams.rest.core.StateStoreInfo;
+import kafka.streams.rest.core.Window;
 import kafka.streams.rest.core.WindowFound;
 import kafka.streams.rest.core.WindowFoundResponse;
 import kafka.streams.rest.core.WindowStateStoreService;
@@ -13,7 +14,6 @@ import kafka.streams.rest.core.WindowsFound;
 import kafka.streams.rest.core.WindowsFoundResponse;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StoreQueryParameters;
-import org.apache.kafka.streams.kstream.Window;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyWindowStore;
 
@@ -57,13 +57,13 @@ public class DefaultWindowStateStoreService<K> implements WindowStateStoreServic
         windows.computeIfPresent(
             entry.key.key(),
             (k, sessionsFound) -> {
-              sessionsFound.add(entry.key.window());
+              sessionsFound.add(Window.from(entry.key.window()));
               return sessionsFound;
             });
         windows.computeIfAbsent(entry.key.key(),
             k -> {
               var list = new ArrayList<Window>();
-              list.add(entry.key.window());
+              list.add(Window.from(entry.key.window()));
               return list;
             });
       }
