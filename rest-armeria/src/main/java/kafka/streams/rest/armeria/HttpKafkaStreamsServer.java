@@ -21,6 +21,7 @@ import kafka.streams.rest.core.internal.DefaultApplicationService;
 import kafka.streams.rest.core.internal.DefaultKeyValueStateStoreService;
 import kafka.streams.rest.core.internal.DefaultSessionStateStoreService;
 import kafka.streams.rest.core.internal.DefaultWindowStateStoreService;
+import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.Topology;
 
 /**
@@ -117,6 +118,10 @@ public final class HttpKafkaStreamsServer {
     this.server = serverBuilder.build();
 
     server.start();
+  }
+
+  public KafkaStreams kafkaStreams() {
+    return applicationService.kafkaStreams();
   }
 
   public void close() {

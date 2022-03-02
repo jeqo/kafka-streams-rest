@@ -2,6 +2,8 @@ package kafka.streams.rest.armeria;
 
 import com.linecorp.armeria.common.HttpResponse;
 import com.linecorp.armeria.common.HttpStatus;
+import com.linecorp.armeria.common.MediaType;
+import com.linecorp.armeria.server.annotation.Delete;
 import com.linecorp.armeria.server.annotation.Get;
 import com.linecorp.armeria.server.annotation.Post;
 import kafka.streams.rest.core.ApplicationStateService;
@@ -60,5 +62,19 @@ final class HttpApplicationStateService {
     } catch (IllegalStateException e) {
       return HttpResponse.ofJson(HttpStatus.CONFLICT, new ErrorResponse(e.getMessage()).asJson());
     }
+  }
+
+  @Post("/threads")
+  public HttpResponse addThread() {
+    return service.kafkaStreams().addStreamThread()
+        .map(id -> HttpResponse.of(HttpStatus.CREATED, MediaType.PLAIN_TEXT_UTF_8, "Thread:" + id))
+        .orElse(HttpResponse.of(HttpStatus.NOT_MODIFIED));
+  }
+
+  @Delete("/threads")
+  public HttpResponse removeThread() {
+    return service.kafkaStreams().removeStreamThread()
+        .map(id -> HttpResponse.of(HttpStatus.OK, MediaType.PLAIN_TEXT_UTF_8, "Thread:" + id))
+        .orElse(HttpResponse.of(HttpStatus.NOT_MODIFIED));
   }
 }
