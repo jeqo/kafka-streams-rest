@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>kafka-streams-rest</artifactId>
-    <groupId>com.github.jeqo.kafka</groupId>
+    <groupId>io.github.jeqo.kafka</groupId>
     <version>0.1.0-SNAPSHOT</version>
   </parent>
 
