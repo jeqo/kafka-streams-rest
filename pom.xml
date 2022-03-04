@@ -5,7 +5,7 @@
 
   <groupId>io.github.jeqo.kafka</groupId>
   <artifactId>kafka-streams-rest</artifactId>
-  <version>0.1.11-SNAPSHOT</version>
+  <version>0.1.11</version>
 
   <modules>
     <module>rest-armeria</module>
@@ -230,7 +230,7 @@
     <developerConnection>scm:git:ssh://git@github.com/jeqo/kafka-streams-rest.git
     </developerConnection>
     <url>https://github.com/jeqo/kafka-streams-rest.git</url>
-    <tag>v0.1.9</tag>
+    <tag>v0.1.11</tag>
   </scm>
 
   <issueManagement>
