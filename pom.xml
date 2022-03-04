@@ -5,7 +5,7 @@
 
   <groupId>io.github.jeqo.kafka</groupId>
   <artifactId>kafka-streams-rest</artifactId>
-  <version>0.1.9-SNAPSHOT</version>
+  <version>0.1.9</version>
 
   <modules>
     <module>rest-armeria</module>
@@ -21,8 +21,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
+    <maven.compiler.source>16</maven.compiler.source>
+    <maven.compiler.target>16</maven.compiler.target>
 
     <kafka.version>3.0.0</kafka.version>
 
@@ -230,7 +230,7 @@
     <developerConnection>scm:git:ssh://git@github.com/jeqo/kafka-streams-rest.git
     </developerConnection>
     <url>https://github.com/jeqo/kafka-streams-rest.git</url>
-    <tag>HEAD</tag>
+    <tag>v0.1.9</tag>
   </scm>
 
   <issueManagement>
