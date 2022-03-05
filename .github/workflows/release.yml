@@ -1,4 +1,4 @@
-name: 'deploy'
+name: 'release'
 
 on:
   push:
@@ -32,11 +32,23 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+  - name: Configure GPG Key
+    run: |
+      echo -n "$GPG_SIGNING_KEY" | base64 --decode | gpg --import
+    env:
+      GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+
       - name: 'Build'
         run: ./mvnw -B --file pom.xml verify
 
-      - name: 'Deploy'
-        run: ./mvnw -B --file pom.xml deploy
+      - name: 'Prepare Release'
+        run: ./mvnw -B --file pom.xml release:prepare -Prelease
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+
+      - name: 'Perform Release'
+        run: ./mvnw -B --file pom.xml release:prepare -Prelease
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
