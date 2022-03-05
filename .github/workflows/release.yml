@@ -1,11 +1,14 @@
 name: 'release'
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version"
+        required: true
+      next:
+        description: "Next version"
+        required: false
 
 jobs:
   build:
@@ -42,10 +45,12 @@ jobs:
         run: ./mvnw -B --file pom.xml verify
 
       - name: 'Prepare Release'
-        run: ./mvnw -B --file pom.xml release:prepare -Prelease
+        run: ./mvnw -B --file pom.xml release:prepare -Prelease -DreleaseVersion=${RELEASE_VERSION} -DdevelopmentVersion=${NEXT_VERSION}
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+          RELEASE_VERSION: ${{ github.event.inputs.version }}
+          NEXT_VERSION: ${{ github.event.inputs.next }}
 
       - name: 'Perform Release'
         run: ./mvnw -B --file pom.xml release:prepare -Prelease
