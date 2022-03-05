@@ -36,7 +36,7 @@ jobs:
         run: ./mvnw -B --file pom.xml verify
 
       - name: 'Deploy'
-        run: ./mvnw -B --file pom.xml deploy
+        run: ./mvnw -B --file pom.xml deploy -Pnative
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
