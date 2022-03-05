@@ -11,7 +11,7 @@ on:
         required: false
 
 jobs:
-  build:
+  release:
 #    if: startsWith(github.event.head_commit.message, '🏁 Releasing version') != true && startsWith(github.event.head_commit.message, '⬆️  Next version') != true
     runs-on: ubuntu-latest
 
