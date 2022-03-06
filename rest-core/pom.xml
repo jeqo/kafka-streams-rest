@@ -4,7 +4,7 @@
   <parent>
     <artifactId>kafka-streams-rest</artifactId>
     <groupId>io.github.jeqo.kafka</groupId>
-    <version>0.1.17</version>
+    <version>0.1.18-SNAPSHOT</version>
   </parent>
 
   <artifactId>kafka-streams-rest-core</artifactId>
