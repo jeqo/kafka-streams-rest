@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Next version"
-        required: false
+        description: 'Release version'
+        required: true
 
 jobs:
   release:
@@ -30,7 +30,7 @@ jobs:
       - name: 'Cache Maven packages'
         uses: actions/cache@v2.1.7
         with:
-          path: ~/.m2
+          path: ~/.m2/repository
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
@@ -40,7 +40,6 @@ jobs:
           echo "Updating POMs to version $VERSION"
           ./mvnw -B versions:set versions:commit -DnewVersion=$VERSION
           echo $VERSION > VERSION
-          sed -i -e "s/^\:project-version\:\ .*/:project-version: ${VERSION}/g" README.md
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "GitHub Action"
           git commit -a -m "Releasing version $VERSION"

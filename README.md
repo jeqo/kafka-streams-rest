@@ -2,8 +2,6 @@
 
 project-phase: experimentation
 
-project-version:
-
 Set of utilities to help Kafka Streams to expose and control the state of their applications.
 
 ## Modules
