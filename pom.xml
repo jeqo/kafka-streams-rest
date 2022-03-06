@@ -348,7 +348,7 @@
         <version>1.6.8</version>
         <extensions>true</extensions>
         <configuration>
-          <serverId>central</serverId>
+          <serverId>ossrh</serverId>
           <nexusUrl>${nexus.url}</nexusUrl>
           <autoReleaseAfterClose>true</autoReleaseAfterClose>
         </configuration>
