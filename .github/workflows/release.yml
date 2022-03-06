@@ -51,6 +51,8 @@ jobs:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          # TODO: fix once nexus plugin supports jdk17
+          MAVEN_OPTS: --illegal-access=permit
         run: |
           export GPG_TTY=$(tty)
           ./mvnw --no-transfer-progress -B --file pom.xml \
