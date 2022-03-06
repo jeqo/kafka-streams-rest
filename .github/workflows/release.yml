@@ -1,16 +1,42 @@
-name: 'release'
+name: 'Release'
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version'
+        description: "Release version"
         required: true
+      next:
+        description: "Next version"
+        required: false
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Check out repository'
+        uses: actions/checkout@v2
+
+      - name: 'Set up Java'
+        uses: actions/setup-java@v2
+        with:
+          java-version: 16
+          distribution: 'zulu'
+
+      - name: 'Cache Maven packages'
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: 'Build'
+        run: ./mvnw -B --no-transfer-progress --file pom.xml verify
   release:
 #    if: startsWith(github.event.head_commit.message, '🏁 Releasing version') != true && startsWith(github.event.head_commit.message, '⬆️  Next version') != true
     runs-on: ubuntu-latest
+    needs: [ build ]
 
     steps:
       - name: 'Check out repository'
@@ -34,18 +60,6 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Version
-        run: |
-          VERSION=${{ github.event.inputs.version }}
-          echo "Updating POMs to version $VERSION"
-          ./mvnw --no-transfer-progress -B versions:set versions:commit -DnewVersion=$VERSION
-          # echo $VERSION > VERSION
-          # sed -i -e "s/^\:project-version\:\ .*/:project-version: ${VERSION}/g" README.md
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "GitHub Action"
-          git commit -a -m "Releasing version $VERSION"
-          git push origin main
-
       - name: Release
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
@@ -54,23 +68,9 @@ jobs:
           # TODO: fix once nexus plugin supports jdk17
           MAVEN_OPTS: --illegal-access=permit
         run: |
-          export GPG_TTY=$(tty)
+          # export GPG_TTY=$(tty)
           ./mvnw --no-transfer-progress -B --file pom.xml \
             -Drepository.url=https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git \
-            -Dmaven.site.skip=true -Drelease=true deploy
+            -DreleaseVersion=${{ github.event.inputs.version }} -DdevelopmentVersion=${{ github.event.inputs.next }} \
+            release:prepare release:perform
 
-#      - name: 'Prepare Release'
-#        run: ./mvnw -B --no-transfer-progress --file pom.xml release:prepare -Prelease -DreleaseVersion=${RELEASE_VERSION} -DdevelopmentVersion=${NEXT_VERSION}
-#        env:
-#          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-#          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
-#          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-#          RELEASE_VERSION: ${{ github.event.inputs.version }}
-#          NEXT_VERSION: ${{ github.event.inputs.next }}
-#
-#      - name: 'Perform Release'
-#        run: ./mvnw -B --no-transfer-progress --file pom.xml release:prepare -Prelease
-#        env:
-#          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-#          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
-#          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}

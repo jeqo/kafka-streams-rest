@@ -1,15 +1,10 @@
-name: 'build'
+name: 'Build'
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-  workflow_dispatch:
+on: [push, pull_request]
 
 
 jobs:
   build:
-#    if: startsWith(github.event.head_commit.message, '🏁 Releasing version') != true && startsWith(github.event.head_commit.message, '⬆️  Next version') != true
     runs-on: ubuntu-latest
 
     steps:
@@ -23,7 +18,7 @@ jobs:
           distribution: 'zulu'
 
       - name: 'Cache Maven packages'
-        uses: actions/cache@v2.1.7
+        uses: actions/cache@v2
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}

@@ -21,6 +21,8 @@
   <properties>
     <project.github.repository>jeqo/kafka-streams-rest</project.github.repository>
     <repository.url>git@github.com:${project.github.repository}.git</repository.url>
+    <local.repository.path>${project.build.directory}/repository</local.repository.path>
+    <nexus.url>https://s01.oss.sonatype.org</nexus.url>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -79,6 +81,17 @@
     <system>GitHub</system>
     <url>https://github.com/${project.github.repository}/issues</url>
   </issueManagement>
+
+  <distributionManagement>
+    <repository>
+      <id>ossrh</id>
+      <url>${nexus.url}/service/local/staging/deploy/maven2</url>
+    </repository>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>${nexus.url}/content/repositories/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
 
   <dependencyManagement>
     <dependencies>
@@ -318,6 +331,28 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>3.0.0-M1</version>
+        <configuration>
+          <useReleaseProfile>false</useReleaseProfile>
+          <releaseProfiles>publication,gpg</releaseProfiles>
+          <autoVersionSubmodules>true</autoVersionSubmodules>
+          <tagNameFormat>v@{project.version}</tagNameFormat>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <version>1.6.8</version>
+        <extensions>true</extensions>
+        <configuration>
+          <serverId>central</serverId>
+          <nexusUrl>${nexus.url}</nexusUrl>
+          <autoReleaseAfterClose>true</autoReleaseAfterClose>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
@@ -426,74 +461,10 @@
 <!--  </build>-->
 
   <profiles>
-<!--    <profile>-->
-<!--      <id>release</id>-->
-<!--      <build>-->
-<!--        <plugins>-->
-<!--          <plugin>-->
-<!--            <artifactId>maven-source-plugin</artifactId>-->
-<!--            <version>3.2.1</version>-->
-<!--            <executions>-->
-<!--              <execution>-->
-<!--                <id>attach-sources</id>-->
-<!--                <goals>-->
-<!--                  <goal>jar-no-fork</goal>-->
-<!--                </goals>-->
-<!--              </execution>-->
-<!--            </executions>-->
-<!--          </plugin>-->
-<!--          <plugin>-->
-<!--            <artifactId>maven-javadoc-plugin</artifactId>-->
-<!--            <version>3.3.1</version>-->
-<!--            <executions>-->
-<!--              <execution>-->
-<!--                <id>attach-javadocs</id>-->
-<!--                <goals>-->
-<!--                  <goal>jar</goal>-->
-<!--                </goals>-->
-<!--              </execution>-->
-<!--            </executions>-->
-<!--          </plugin>-->
-<!--          <plugin>-->
-<!--            <artifactId>maven-gpg-plugin</artifactId>-->
-<!--            <version>3.0.1</version>-->
-<!--            <configuration>-->
-<!--              <gpgArguments>-->
-<!--                <arg>&#45;&#45;pinentry-mode</arg>-->
-<!--                <arg>loopback</arg>-->
-<!--              </gpgArguments>-->
-<!--            </configuration>-->
-<!--            <executions>-->
-<!--              <execution>-->
-<!--                <id>sign-artifacts</id>-->
-<!--                <phase>verify</phase>-->
-<!--                <goals>-->
-<!--                  <goal>sign</goal>-->
-<!--                </goals>-->
-<!--              </execution>-->
-<!--            </executions>-->
-<!--          </plugin>-->
-<!--          <plugin>-->
-<!--            <groupId>org.sonatype.plugins</groupId>-->
-<!--            <artifactId>nexus-staging-maven-plugin</artifactId>-->
-<!--            <version>1.6.8</version>-->
-<!--            <extensions>true</extensions>-->
-<!--            <configuration>-->
-<!--              <serverId>ossrh</serverId>-->
-<!--              <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>-->
-<!--              <autoReleaseAfterClose>true</autoReleaseAfterClose>-->
-<!--            </configuration>-->
-<!--          </plugin>-->
-<!--        </plugins>-->
-<!--      </build>-->
-<!--    </profile>-->
-
     <profile>
       <id>publication</id>
       <activation>
-        <property>
-          <name>release</name>
-        </property>
+        <activeByDefault>false</activeByDefault>
       </activation>
       <build>
         <plugins>
@@ -548,24 +519,24 @@
         </plugins>
       </build>
     </profile>
+
     <profile>
       <id>gpg</id>
       <activation>
-        <property>
-          <name>release</name>
-        </property>
+        <activeByDefault>false</activeByDefault>
       </activation>
       <build>
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.6</version>
             <executions>
               <execution>
+                <phase>verify</phase>
                 <goals>
                   <goal>sign</goal>
                 </goals>
-                <phase>verify</phase>
                 <configuration>
                   <gpgArguments>
                     <arg>--pinentry-mode</arg>
@@ -578,6 +549,7 @@
         </plugins>
       </build>
     </profile>
+
     <profile>
       <id>remote-deploy</id>
       <activation>
@@ -601,17 +573,60 @@
         </plugins>
       </build>
     </profile>
+
+    <profile>
+      <id>local-deploy</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <distributionManagement>
+        <snapshotRepository>
+          <id>local-snapshot</id>
+          <url>file://${local.repository.path}/snapshot</url>
+        </snapshotRepository>
+        <repository>
+          <id>local-release</id>
+          <url>file://${local.repository.path}/release</url>
+        </repository>
+      </distributionManagement>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-clean-plugin</artifactId>
+            <inherited>false</inherited>
+            <configuration>
+              <filesets>
+                <fileset>
+                  <directory>${local.repository.path}</directory>
+                </fileset>
+              </filesets>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>3.0.0</version>
+            <inherited>false</inherited>
+            <executions>
+              <execution>
+                <id>generate-repository-directories</id>
+                <phase>generate-sources</phase>
+                <configuration>
+                  <target>
+                    <mkdir dir="${local.repository.path}/snapshot" />
+                    <mkdir dir="${local.repository.path}/release" />
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
-
-  <distributionManagement>
-    <repository>
-      <id>ossrh</id>
-      <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2</url>
-    </repository>
-    <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
-  </distributionManagement>
 </project>
