@@ -4,9 +4,6 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version"
-        required: true
-      next:
         description: "Next version"
         required: false
 
@@ -37,21 +34,41 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: 'Build'
-        run: ./mvnw -B --file pom.xml verify
+      - name: Version
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          echo "Updating POMs to version $VERSION"
+          ./mvnw -B versions:set versions:commit -DnewVersion=$VERSION
+          echo $VERSION > VERSION
+          sed -i -e "s/^\:project-version\:\ .*/:project-version: ${VERSION}/g" README.adoc
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "GitHub Action"
+          git commit -a -m "Releasing version $VERSION"
+          git push origin main
 
-      - name: 'Prepare Release'
-        run: ./mvnw -B --file pom.xml release:prepare -Prelease -DreleaseVersion=${RELEASE_VERSION} -DdevelopmentVersion=${NEXT_VERSION} -X
+      - name: Release
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-          RELEASE_VERSION: ${{ github.event.inputs.version }}
-          NEXT_VERSION: ${{ github.event.inputs.next }}
+        run: |
+          export GPG_TTY=$(tty)
+          ./mvnw --no-transfer-progress -B --file pom.xml \
+            -Drepository.url=https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git \
+            -Dmaven.site.skip=true -Drelease=true deploy
 
-      - name: 'Perform Release'
-        run: ./mvnw -B --file pom.xml release:prepare -Prelease
-        env:
-          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+#      - name: 'Prepare Release'
+#        run: ./mvnw -B --no-transfer-progress --file pom.xml release:prepare -Prelease -DreleaseVersion=${RELEASE_VERSION} -DdevelopmentVersion=${NEXT_VERSION}
+#        env:
+#          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+#          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+#          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+#          RELEASE_VERSION: ${{ github.event.inputs.version }}
+#          NEXT_VERSION: ${{ github.event.inputs.next }}
+#
+#      - name: 'Perform Release'
+#        run: ./mvnw -B --no-transfer-progress --file pom.xml release:prepare -Prelease
+#        env:
+#          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+#          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+#          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
