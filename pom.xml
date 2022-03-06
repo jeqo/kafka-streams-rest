@@ -5,7 +5,7 @@
 
   <groupId>io.github.jeqo.kafka</groupId>
   <artifactId>kafka-streams-rest</artifactId>
-  <version>0.1.15</version>
+  <version>0.1.15-RC1</version>
 
   <modules>
     <module>rest-armeria</module>
