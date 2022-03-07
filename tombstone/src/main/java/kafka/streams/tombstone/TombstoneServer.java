@@ -3,9 +3,7 @@ package kafka.streams.tombstone;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Optional;
 import java.util.Properties;
-
 import kafka.streams.rest.armeria.HttpKafkaStreamsServer;
 
 /**
@@ -19,7 +17,6 @@ public class TombstoneServer {
     var config = TombstoneConfig.load(props);
     var topology = new TombstoneTopology(
         config.maxAge(),
-        Optional.of(config.scanFrequency()),
         config.sourceTopic()
     );
     final var server = HttpKafkaStreamsServer.newBuilder()

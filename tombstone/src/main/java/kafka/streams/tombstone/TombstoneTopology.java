@@ -32,6 +32,13 @@ class TombstoneTopology implements Supplier<Topology> {
   private final String sourceTopic;
   private final String destinationTopic;
 
+  public TombstoneTopology(Duration maxAge, String sourceTopic) {
+    this.maxAge = maxAge;
+    this.scanFrequency = Optional.empty();
+    this.sourceTopic = sourceTopic;
+    this.destinationTopic = sourceTopic;
+  }
+
   public TombstoneTopology(Duration maxAge, Optional<Duration> scanFrequency, String sourceTopic) {
     this.maxAge = maxAge;
     this.scanFrequency = scanFrequency;
@@ -48,9 +55,17 @@ class TombstoneTopology implements Supplier<Topology> {
 
   @Override
   public Topology get() {
-    return keyValueBased();
+    // return keyValueBased();
+    return sessionBased();
   }
 
+  /**
+   * Session-window-based approach to emit tombstones.
+   * It's based on 2 state stores: 1 for the session window, were the key is stored; and a suppression store
+   * where window results are buffered until they close.
+   *
+   * @return session-based Kafka Streams Topology.
+   */
   Topology sessionBased() {
     final var builder = new StreamsBuilder();
     builder.stream(sourceTopic, Consumed.with(Serdes.ByteBuffer(), Serdes.Bytes()).withName("read-table-source"))
@@ -72,7 +87,14 @@ class TombstoneTopology implements Supplier<Topology> {
     return builder.build();
   }
 
-  private Topology keyValueBased() {
+  /**
+   * Initial approach, based on https://kafka-tutorials.confluent.io/schedule-ktable-ttl/kstreams.html
+   * @deprecated as it becomes expensive as the key cardinality grows and the scan frequency stops been enough.
+   * @see #sessionBased()
+   * @return key-value based topology.
+   */
+  @Deprecated
+  Topology keyValueBased() {
     final var builder = new StreamsBuilder();
     builder.addStateStore(Stores.keyValueStoreBuilder(
         Stores.persistentKeyValueStore(sourceTopic),
@@ -100,7 +122,6 @@ class TombstoneTopology implements Supplier<Topology> {
 
 
     /**
-     * Based on https://kafka-tutorials.confluent.io/schedule-ktable-ttl/kstreams.html
      * @param maxAge how old key messages can be. Older messages are candidates to be removed with tombstone.
      * @param scanFrequency how often to check key's age.
      * @param stateStoreName name for internal state store containing keys and timestamps.
