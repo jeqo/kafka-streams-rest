@@ -2,6 +2,8 @@ package kafka.streams.tombstone;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
@@ -9,8 +11,12 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Consumed;
+import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Named;
 import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.SessionWindows;
+import org.apache.kafka.streams.kstream.Suppressed;
+import org.apache.kafka.streams.kstream.Suppressed.BufferConfig;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.PunctuationType;
@@ -21,18 +27,52 @@ import org.apache.kafka.streams.state.Stores;
 class TombstoneTopology implements Supplier<Topology> {
 
   private final Duration maxAge;
-  private final Duration scanFrequency;
+  private final Optional<Duration> scanFrequency;
 
   private final String sourceTopic;
+  private final String destinationTopic;
 
-  public TombstoneTopology(Duration maxAge, Duration scanFrequency, String sourceTopic) {
+  public TombstoneTopology(Duration maxAge, Optional<Duration> scanFrequency, String sourceTopic) {
     this.maxAge = maxAge;
     this.scanFrequency = scanFrequency;
     this.sourceTopic = sourceTopic;
+    this.destinationTopic = sourceTopic;
+  }
+
+  public TombstoneTopology(Duration maxAge, Optional<Duration> scanFrequency, String sourceTopic, String destinationTopic) {
+    this.maxAge = maxAge;
+    this.scanFrequency = scanFrequency;
+    this.sourceTopic = sourceTopic;
+    this.destinationTopic = destinationTopic;
   }
 
   @Override
   public Topology get() {
+    return keyValueBased();
+  }
+
+  Topology sessionBased() {
+    final var builder = new StreamsBuilder();
+    builder.stream(sourceTopic, Consumed.with(Serdes.ByteBuffer(), Serdes.Bytes()).withName("read-table-source"))
+        .filterNot((key, value) -> Objects.isNull(value))
+        .groupByKey()
+        .windowedBy(SessionWindows.ofInactivityGapWithNoGrace(maxAge))
+        .reduce(
+            (previous, latest) -> Bytes.wrap(new byte[]{}),
+            Named.as("keep-only-latest-value"),
+            Materialized.as("active-keys"))
+        .suppress(Suppressed.untilWindowCloses(BufferConfig.unbounded()).withName("suppress-buffer"))
+        .toStream(Named.as("to-stream"))
+        .peek(
+            (key, value) -> System.out.println("Removing key: " + new String(key.key().array()) + " at " + key.window().endTime()),
+            Named.as("log-record-key-to-be-removed"))
+        .selectKey((key, value) -> key.key(), Named.as("set-record-key"))
+        .mapValues(value -> (Void) null, Named.as("set-tombstone"))
+        .to(destinationTopic, Produced.with(Serdes.ByteBuffer(), Serdes.Void()).withName("write-tombstone-back"));
+    return builder.build();
+  }
+
+  private Topology keyValueBased() {
     final var builder = new StreamsBuilder();
     builder.addStateStore(Stores.keyValueStoreBuilder(
         Stores.persistentKeyValueStore(sourceTopic),
@@ -43,7 +83,7 @@ class TombstoneTopology implements Supplier<Topology> {
     builder.stream(sourceTopic, Consumed.with(Serdes.ByteBuffer(), Serdes.Bytes()).withName("read-table-source"))
         .transform(() ->
                 new TtlEmitter<ByteBuffer, Bytes, KeyValue<ByteBuffer, Void>>(
-                    maxAge, scanFrequency, sourceTopic
+                    maxAge, scanFrequency.get(), sourceTopic
                 ),
             Named.as("process-ttl-checks"), sourceTopic)
         .to(sourceTopic, Produced.with(Serdes.ByteBuffer(), Serdes.Void()).withName("write-tombstone-back"));
