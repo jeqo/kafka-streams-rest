@@ -22,6 +22,7 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.SessionStore;
 import org.apache.kafka.streams.state.Stores;
 
 class TombstoneTopology implements Supplier<Topology> {
@@ -68,19 +69,26 @@ class TombstoneTopology implements Supplier<Topology> {
    */
   Topology sessionBased() {
     final var builder = new StreamsBuilder();
-    builder.stream(sourceTopic, Consumed.with(Serdes.ByteBuffer(), Serdes.Bytes()).withName("read-table-source"))
+    builder.stream(sourceTopic,
+            Consumed.with(Serdes.ByteBuffer(), Serdes.Bytes()).withName("read-table-source"))
+        // avoid processing tombstones (probably produced by this component)
         .filterNot((key, value) -> Objects.isNull(value))
         .groupByKey()
         .windowedBy(SessionWindows.ofInactivityGapWithNoGrace(maxAge))
         .reduce(
+            // avoid keeping the whole value
             (previous, latest) -> Bytes.wrap(new byte[]{}),
             Named.as("keep-only-latest-value"),
-            Materialized.as("active-keys"))
-        .suppress(Suppressed.untilWindowCloses(BufferConfig.unbounded()).withName("suppress-buffer"))
+            Materialized.<ByteBuffer, Bytes, SessionStore<Bytes, byte[]>>as("active-keys")
+                .withRetention(maxAge.plus(maxAge)))
+        // wait until window is close to emit tombstones
+        .suppress(
+            Suppressed.untilWindowCloses(BufferConfig.unbounded()).withName("suppress-buffer"))
         .toStream(Named.as("to-stream"))
         .peek(
             (key, value) -> System.out.println("Removing key: " + new String(key.key().array()) + " at " + key.window().endTime()),
             Named.as("log-record-key-to-be-removed"))
+        // prepare tombstone
         .selectKey((key, value) -> key.key(), Named.as("set-record-key"))
         .mapValues(value -> (Void) null, Named.as("set-tombstone"))
         .to(destinationTopic, Produced.with(Serdes.ByteBuffer(), Serdes.Void()).withName("write-tombstone-back"));
@@ -102,17 +110,20 @@ class TombstoneTopology implements Supplier<Topology> {
         Serdes.Long()
     ));
 
-    builder.stream(sourceTopic, Consumed.with(Serdes.ByteBuffer(), Serdes.Bytes()).withName("read-table-source"))
+    builder.stream(sourceTopic,
+            Consumed.with(Serdes.ByteBuffer(), Serdes.Bytes()).withName("read-table-source"))
         .transform(() ->
                 new TtlEmitter<ByteBuffer, Bytes, KeyValue<ByteBuffer, Void>>(
                     maxAge, scanFrequency.get(), sourceTopic
                 ),
             Named.as("process-ttl-checks"), sourceTopic)
-        .to(sourceTopic, Produced.with(Serdes.ByteBuffer(), Serdes.Void()).withName("write-tombstone-back"));
+        .to(sourceTopic,
+            Produced.with(Serdes.ByteBuffer(), Serdes.Void()).withName("write-tombstone-back"));
     return builder.build();
   }
 
-  public static class TtlEmitter<K, V, R> implements Transformer<K, V, R> {
+  @Deprecated
+  static class TtlEmitter<K, V, R> implements Transformer<K, V, R> {
 
     private final Duration maxAge;
     private final Duration scanFrequency;

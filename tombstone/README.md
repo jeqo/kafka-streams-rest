@@ -4,17 +4,14 @@ Within Kafka Streams applications (e.g. ksqlDB persistent queries) state is stor
 
 This service is aimed to alleviate the challenge of keeping the state stores efficient and remove records after a period of time (TTL) based on its metadata.
 
-This work is inspired on https://kafka-tutorials.confluent.io/schedule-ktable-ttl/kstreams.html.
-It wraps this topology and packages it as a side application to be deployed along your Kafka Streams app.
-Tombstone messages will be produce on the source topic, so KTables can be updated and older records removed.
+[Rationale](./RATIONALE.md).
 
 ## Configuration
 
-| Name | Type | Description | Default |
-|------|------|-------------|---------|
-| `tombstone.topic` | text | Table source topic. | `<empty>` |
-| `tombstone.scan_frequency` | long | Milliseconds representing how often to scan the record timestamps. To be evaluated on event-time, not wall-clock time. | `<empty>` |
-| `tombstone.max_age` | long | Milliseconds representing how old a key timestamp could be before a tombstone is produced. | `<empty>` |
+| Name | Type | Description                                                                                                        | Default |
+|------|------|--------------------------------------------------------------------------------------------------------------------|---------|
+| `tombstone.topic` | text | Table source topic.                                                                                                | `<empty>` |
+| `tombstone.max_age` | long | Milliseconds representing how old a key timestamp could be before a tombstone is produced. Session inactivity gap. | `<empty>` |
 
 ## How to use it
 
@@ -51,7 +48,6 @@ application.id=tombstone-server-v1
 state.dir=target/kafka-streams
 
 tombstone.topic=input
-tombstone.scan_frequency=10000
 tombstone.max_age=60000
 ```
 
