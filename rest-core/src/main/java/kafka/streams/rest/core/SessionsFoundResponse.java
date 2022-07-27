@@ -8,14 +8,12 @@ import java.util.List;
 import org.apache.kafka.streams.kstream.Window;
 
 public record SessionsFoundResponse(
-    @JsonProperty("keyFrom") Object keyFrom,
-    @JsonProperty("keyTo") Object keyTo,
-    @JsonProperty("found") boolean found,
-    @JsonProperty("sessions") List<SessionFound> sessions
+  @JsonProperty("keyFrom") Object keyFrom,
+  @JsonProperty("keyTo") Object keyTo,
+  @JsonProperty("found") boolean found,
+  @JsonProperty("sessions") List<SessionFound> sessions
 ) {
-
-  static final ObjectMapper jsonMapper = new ObjectMapper()
-      .registerModule(new JavaTimeModule());
+  static final ObjectMapper jsonMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
   public JsonNode asJson() {
     return jsonMapper.valueToTree(this);

@@ -53,30 +53,33 @@ public class DefaultSessionStateStoreService<K> implements SessionStateStoreServ
       while (fetch.hasNext()) {
         var entry = fetch.next();
         sessions.computeIfPresent(
-            entry.key.key(),
-            (k, sessionsFound) -> {
-              sessionsFound.add(Window.from(entry.key.window()));
-              return sessionsFound;
-            });
-        sessions.computeIfAbsent(entry.key.key(),
-            k -> {
-              var list = new ArrayList<Window>();
-              list.add(Window.from(entry.key.window()));
-              return list;
-            });
+          entry.key.key(),
+          (k, sessionsFound) -> {
+            sessionsFound.add(Window.from(entry.key.window()));
+            return sessionsFound;
+          }
+        );
+        sessions.computeIfAbsent(
+          entry.key.key(),
+          k -> {
+            var list = new ArrayList<Window>();
+            list.add(Window.from(entry.key.window()));
+            return list;
+          }
+        );
       }
     }
     return new SessionsFoundResponse(
-        keyFrom, keyTo,
-        found,
-        sessions.keySet().stream()
-            .map(k -> new SessionFound(k, sessions.get(k)))
-            .toList()
+      keyFrom,
+      keyTo,
+      found,
+      sessions.keySet().stream().map(k -> new SessionFound(k, sessions.get(k))).toList()
     );
   }
 
   private ReadOnlySessionStore<K, ?> store() {
-    return kafkaStreams.get().store(
-        StoreQueryParameters.fromNameAndType(storeName, QueryableStoreTypes.sessionStore()));
+    return kafkaStreams
+      .get()
+      .store(StoreQueryParameters.fromNameAndType(storeName, QueryableStoreTypes.sessionStore()));
   }
 }

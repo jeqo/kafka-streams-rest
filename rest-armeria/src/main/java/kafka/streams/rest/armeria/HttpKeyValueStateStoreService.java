@@ -29,6 +29,7 @@ final class HttpKeyValueStateStoreService<K> {
     return HttpResponse.ofJson(service.info().asJson());
   }
 
+  @SuppressWarnings("unchecked")
   @Get("/{key}")
   public HttpResponse checkKey(@Param("key") String key) {
     if (keyClass == String.class) {
@@ -51,17 +52,17 @@ final class HttpKeyValueStateStoreService<K> {
     } else if (keyClass == UUID.class) {
       return HttpResponse.ofJson(service.keyFound((K) UUID.fromString(key)).asJson());
     } else if (keyClass == byte[].class) {
-      return HttpResponse.ofJson(
-          service.keyFound((K) key.getBytes(StandardCharsets.UTF_8)).asJson());
+      return HttpResponse.ofJson(service.keyFound((K) key.getBytes(StandardCharsets.UTF_8)).asJson());
     } else if (keyClass == Bytes.class) {
-      return HttpResponse.ofJson(
-          service.keyFound((K) Bytes.wrap(key.getBytes(StandardCharsets.UTF_8))).asJson());
+      return HttpResponse.ofJson(service.keyFound((K) Bytes.wrap(key.getBytes(StandardCharsets.UTF_8))).asJson());
     } else if (keyClass == ByteBuffer.class) {
-      return HttpResponse.ofJson(
-          service.keyFound((K) ByteBuffer.wrap(key.getBytes(StandardCharsets.UTF_8))).asJson());
+      return HttpResponse.ofJson(service.keyFound((K) ByteBuffer.wrap(key.getBytes(StandardCharsets.UTF_8))).asJson());
     } else {
-      return HttpResponse.of(HttpStatus.CONFLICT, MediaType.ANY_TEXT_TYPE,
-          "Key %s (type: %s) is not supported".formatted(key, keyClass.getName()));
+      return HttpResponse.of(
+        HttpStatus.CONFLICT,
+        MediaType.ANY_TEXT_TYPE,
+        "Key %s (type: %s) is not supported".formatted(key, keyClass.getName())
+      );
     }
   }
 }

@@ -7,13 +7,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.Instant;
 import java.util.List;
 
-public record WindowFound(
-    @JsonProperty("key") Object key,
-    @JsonProperty("times") List<Instant> time
-) {
-
-  static final ObjectMapper jsonMapper = new ObjectMapper()
-      .registerModule(new JavaTimeModule());
+public record WindowFound(@JsonProperty("key") Object key, @JsonProperty("times") List<Instant> time) {
+  static final ObjectMapper jsonMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
   public JsonNode asJson() {
     return jsonMapper.valueToTree(this);

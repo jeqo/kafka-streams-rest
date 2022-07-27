@@ -30,7 +30,7 @@ final class HttpSessionStateStoreService<K> {
     return HttpResponse.ofJson(service.info().asJson());
   }
 
-
+  @SuppressWarnings("unchecked")
   @Get("/{keyFrom}/{keyTo}")
   public HttpResponse checkKeys(@Param("keyFrom") String keyFrom, @Param("keyTo") String keyTo) {
     if (keyClass == String.class) {
@@ -56,28 +56,43 @@ final class HttpSessionStateStoreService<K> {
       final Long longKeyTo = Long.parseLong(keyTo);
       return HttpResponse.ofJson(service.sessionsFound((K) longKeyFrom, (K) longKeyTo).asJson());
     } else if (keyClass == UUID.class) {
-      return HttpResponse.ofJson(service.sessionsFound((K) UUID.fromString(keyFrom), (K) UUID.fromString(keyTo)).asJson());
+      return HttpResponse.ofJson(
+        service.sessionsFound((K) UUID.fromString(keyFrom), (K) UUID.fromString(keyTo)).asJson()
+      );
     } else if (keyClass == byte[].class) {
       return HttpResponse.ofJson(
-          service.sessionsFound(
-              (K) keyFrom.getBytes(StandardCharsets.UTF_8),
-              (K) keyTo.getBytes(StandardCharsets.UTF_8)).asJson());
+        service
+          .sessionsFound((K) keyFrom.getBytes(StandardCharsets.UTF_8), (K) keyTo.getBytes(StandardCharsets.UTF_8))
+          .asJson()
+      );
     } else if (keyClass == Bytes.class) {
       return HttpResponse.ofJson(
-          service.sessionsFound(
-              (K) Bytes.wrap(keyFrom.getBytes(StandardCharsets.UTF_8)),
-              (K) Bytes.wrap(keyTo.getBytes(StandardCharsets.UTF_8))).asJson());
+        service
+          .sessionsFound(
+            (K) Bytes.wrap(keyFrom.getBytes(StandardCharsets.UTF_8)),
+            (K) Bytes.wrap(keyTo.getBytes(StandardCharsets.UTF_8))
+          )
+          .asJson()
+      );
     } else if (keyClass == ByteBuffer.class) {
       return HttpResponse.ofJson(
-          service.sessionsFound(
-              (K) ByteBuffer.wrap(keyFrom.getBytes(StandardCharsets.UTF_8)),
-              (K) ByteBuffer.wrap(keyTo.getBytes(StandardCharsets.UTF_8))).asJson());
+        service
+          .sessionsFound(
+            (K) ByteBuffer.wrap(keyFrom.getBytes(StandardCharsets.UTF_8)),
+            (K) ByteBuffer.wrap(keyTo.getBytes(StandardCharsets.UTF_8))
+          )
+          .asJson()
+      );
     } else {
-      return HttpResponse.of(HttpStatus.CONFLICT, MediaType.ANY_TEXT_TYPE,
-          "Key %s (type: %s) is not supported".formatted(keyFrom, keyClass.getName()));
+      return HttpResponse.of(
+        HttpStatus.CONFLICT,
+        MediaType.ANY_TEXT_TYPE,
+        "Key %s (type: %s) is not supported".formatted(keyFrom, keyClass.getName())
+      );
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Get("/{key}")
   public HttpResponse checkKey(@Param("key") String key) {
     if (keyClass == String.class) {
@@ -100,17 +115,19 @@ final class HttpSessionStateStoreService<K> {
     } else if (keyClass == UUID.class) {
       return HttpResponse.ofJson(service.sessionFound((K) UUID.fromString(key)).asJson());
     } else if (keyClass == byte[].class) {
-      return HttpResponse.ofJson(
-          service.sessionFound((K) key.getBytes(StandardCharsets.UTF_8)).asJson());
+      return HttpResponse.ofJson(service.sessionFound((K) key.getBytes(StandardCharsets.UTF_8)).asJson());
     } else if (keyClass == Bytes.class) {
-      return HttpResponse.ofJson(
-          service.sessionFound((K) Bytes.wrap(key.getBytes(StandardCharsets.UTF_8))).asJson());
+      return HttpResponse.ofJson(service.sessionFound((K) Bytes.wrap(key.getBytes(StandardCharsets.UTF_8))).asJson());
     } else if (keyClass == ByteBuffer.class) {
       return HttpResponse.ofJson(
-          service.sessionFound((K) ByteBuffer.wrap(key.getBytes(StandardCharsets.UTF_8))).asJson());
+        service.sessionFound((K) ByteBuffer.wrap(key.getBytes(StandardCharsets.UTF_8))).asJson()
+      );
     } else {
-      return HttpResponse.of(HttpStatus.CONFLICT, MediaType.ANY_TEXT_TYPE,
-          "Key %s (type: %s) is not supported".formatted(key, keyClass.getName()));
+      return HttpResponse.of(
+        HttpStatus.CONFLICT,
+        MediaType.ANY_TEXT_TYPE,
+        "Key %s (type: %s) is not supported".formatted(key, keyClass.getName())
+      );
     }
   }
 }

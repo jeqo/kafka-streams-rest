@@ -55,30 +55,31 @@ public class DefaultWindowStateStoreService<K> implements WindowStateStoreServic
       while (fetch.hasNext()) {
         var entry = fetch.next();
         windows.computeIfPresent(
-            entry.key.key(),
-            (k, sessionsFound) -> {
-              sessionsFound.add(Window.from(entry.key.window()));
-              return sessionsFound;
-            });
-        windows.computeIfAbsent(entry.key.key(),
-            k -> {
-              var list = new ArrayList<Window>();
-              list.add(Window.from(entry.key.window()));
-              return list;
-            });
+          entry.key.key(),
+          (k, sessionsFound) -> {
+            sessionsFound.add(Window.from(entry.key.window()));
+            return sessionsFound;
+          }
+        );
+        windows.computeIfAbsent(
+          entry.key.key(),
+          k -> {
+            var list = new ArrayList<Window>();
+            list.add(Window.from(entry.key.window()));
+            return list;
+          }
+        );
       }
     }
     return new WindowsFoundResponse(
-        keyFrom, keyTo,
-        found,
-        windows.keySet().stream()
-            .map(k -> new WindowsFound(k, windows.get(k)))
-            .toList()
+      keyFrom,
+      keyTo,
+      found,
+      windows.keySet().stream().map(k -> new WindowsFound(k, windows.get(k))).toList()
     );
   }
 
   private ReadOnlyWindowStore<K, ?> store() {
-    return kafkaStreams.get().store(
-        StoreQueryParameters.fromNameAndType(storeName, QueryableStoreTypes.windowStore()));
+    return kafkaStreams.get().store(StoreQueryParameters.fromNameAndType(storeName, QueryableStoreTypes.windowStore()));
   }
 }

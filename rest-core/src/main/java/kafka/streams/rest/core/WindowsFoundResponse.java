@@ -6,12 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 
 public record WindowsFoundResponse(
-    @JsonProperty("keyFrom") Object keyFrom,
-    @JsonProperty("keyTo") Object keyTo,
-    @JsonProperty("found") boolean found,
-    @JsonProperty("windows") List<WindowsFound> windows
+  @JsonProperty("keyFrom") Object keyFrom,
+  @JsonProperty("keyTo") Object keyTo,
+  @JsonProperty("found") boolean found,
+  @JsonProperty("windows") List<WindowsFound> windows
 ) {
-
   static final ObjectMapper jsonMapper = new ObjectMapper();
 
   public JsonNode asJson() {

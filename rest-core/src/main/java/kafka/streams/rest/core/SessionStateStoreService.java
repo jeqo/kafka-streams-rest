@@ -1,7 +1,6 @@
 package kafka.streams.rest.core;
 
 public interface SessionStateStoreService<K> {
-
   StateStoreInfo info();
 
   /**

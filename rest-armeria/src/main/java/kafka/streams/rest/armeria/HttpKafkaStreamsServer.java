@@ -41,20 +41,22 @@ public final class HttpKafkaStreamsServer {
   Server server;
 
   public HttpKafkaStreamsServer(
-      final Topology topology,
-      final Properties streamsConfig,
-      final int port,
-      final boolean prometheusMetricsEnabled,
-      final Map<String, Class<?>> kvStoreNames,
-      final Map<String, Class<?>> windowStoreNames,
-      final Map<String, Class<?>> sessionStoreNames
+    final Topology topology,
+    final Properties streamsConfig,
+    final int port,
+    final boolean prometheusMetricsEnabled,
+    final Map<String, Class<?>> kvStoreNames,
+    final Map<String, Class<?>> windowStoreNames,
+    final Map<String, Class<?>> sessionStoreNames
   ) {
     this.kvStoreNames = kvStoreNames;
     this.windowStoreNames = windowStoreNames;
     this.sessionStoreNames = sessionStoreNames;
     this.applicationService = new DefaultApplicationService(topology, streamsConfig);
     this.prometheusMetricsEnabled = prometheusMetricsEnabled;
-    this.serverBuilder = Server.builder()
+    this.serverBuilder =
+      Server
+        .builder()
         .http(port)
         .annotatedService("/application", new HttpApplicationStateService(applicationService))
         .serviceUnder("/", DocService.builder().build());
@@ -72,31 +74,31 @@ public final class HttpKafkaStreamsServer {
     applicationService.start();
 
     kvStoreNames.forEach((store, keyClass) ->
-        serverBuilder.annotatedService(
-            "/stores/key-value/" + store,
-            new HttpKeyValueStateStoreService<>(
-                new DefaultKeyValueStateStoreService<>(applicationService::kafkaStreams, store),
-                keyClass
-            )
+      serverBuilder.annotatedService(
+        "/stores/key-value/" + store,
+        new HttpKeyValueStateStoreService<>(
+          new DefaultKeyValueStateStoreService<>(applicationService::kafkaStreams, store),
+          keyClass
         )
+      )
     );
     windowStoreNames.forEach((store, keyClass) ->
-        serverBuilder.annotatedService(
-            "/stores/window/" + store,
-            new HttpWindowStateStoreService<>(
-                new DefaultWindowStateStoreService<>(applicationService::kafkaStreams, store),
-                keyClass
-            )
+      serverBuilder.annotatedService(
+        "/stores/window/" + store,
+        new HttpWindowStateStoreService<>(
+          new DefaultWindowStateStoreService<>(applicationService::kafkaStreams, store),
+          keyClass
         )
+      )
     );
     sessionStoreNames.forEach((store, keyClass) ->
-        serverBuilder.annotatedService(
-            "/stores/session/" + store,
-            new HttpSessionStateStoreService<>(
-                new DefaultSessionStateStoreService<>(applicationService::kafkaStreams, store),
-                keyClass
-            )
+      serverBuilder.annotatedService(
+        "/stores/session/" + store,
+        new HttpSessionStateStoreService<>(
+          new DefaultSessionStateStoreService<>(applicationService::kafkaStreams, store),
+          keyClass
         )
+      )
     );
     if (prometheusMetricsEnabled) {
       var prometheusRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
@@ -111,9 +113,9 @@ public final class HttpKafkaStreamsServer {
       new KafkaStreamsMetrics(applicationService.kafkaStreams()).bindTo(prometheusRegistry);
 
       serverBuilder.service(
-          "/metrics",
-          (ctx, req) ->
-              HttpResponse.of(prometheusRegistry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100)));
+        "/metrics",
+        (ctx, req) -> HttpResponse.of(prometheusRegistry.scrape(TextFormat.CONTENT_TYPE_OPENMETRICS_100))
+      );
     }
     this.server = serverBuilder.build();
 
@@ -180,12 +182,13 @@ public final class HttpKafkaStreamsServer {
 
     public HttpKafkaStreamsServer build(Topology topology, Properties configs) {
       return new HttpKafkaStreamsServer(
-          topology, configs,
-          port,
-          prometheusMetricsEnabled,
-          keyValueStoreNames,
-          windowStoreNames,
-          sessionStoreNames
+        topology,
+        configs,
+        port,
+        prometheusMetricsEnabled,
+        keyValueStoreNames,
+        windowStoreNames,
+        sessionStoreNames
       );
     }
   }

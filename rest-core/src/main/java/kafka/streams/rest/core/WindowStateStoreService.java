@@ -3,7 +3,6 @@ package kafka.streams.rest.core;
 import java.time.Instant;
 
 public interface WindowStateStoreService<K> {
-
   StateStoreInfo info();
 
   /**

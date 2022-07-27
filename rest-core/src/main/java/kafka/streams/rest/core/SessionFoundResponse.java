@@ -9,12 +9,10 @@ import org.apache.kafka.streams.kstream.Window;
 import org.apache.kafka.streams.kstream.Windowed;
 
 public record SessionFoundResponse(
-    @JsonProperty("found") boolean found,
-    @JsonProperty("session") SessionFound sessionFound
-    ) {
-
-  static final ObjectMapper jsonMapper = new ObjectMapper()
-      .registerModule(new JavaTimeModule());
+  @JsonProperty("found") boolean found,
+  @JsonProperty("session") SessionFound sessionFound
+) {
+  static final ObjectMapper jsonMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
   public JsonNode asJson() {
     return jsonMapper.valueToTree(this);

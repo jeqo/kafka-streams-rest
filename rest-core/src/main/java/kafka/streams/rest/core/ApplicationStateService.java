@@ -3,7 +3,6 @@ package kafka.streams.rest.core;
 import org.apache.kafka.streams.KafkaStreams;
 
 public interface ApplicationStateService {
-
   // Queries
 
   /**

@@ -25,8 +25,9 @@ public class DefaultKeyValueStateStoreService<K> implements KeyValueStateStoreSe
   }
 
   private ReadOnlyKeyValueStore<K, ?> store() {
-    return kafkaStreams.get().store(
-        StoreQueryParameters.fromNameAndType(storeName, QueryableStoreTypes.keyValueStore()));
+    return kafkaStreams
+      .get()
+      .store(StoreQueryParameters.fromNameAndType(storeName, QueryableStoreTypes.keyValueStore()));
   }
 
   @Override

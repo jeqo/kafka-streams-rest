@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public record KeyValueStateStoreInfo(
-    @JsonProperty("storeName") String storeName,
-    @JsonProperty("approximateNumEntries") long approximateNumEntries) {
-
+  @JsonProperty("storeName") String storeName,
+  @JsonProperty("approximateNumEntries") long approximateNumEntries
+) {
   static final ObjectMapper jsonMapper = new ObjectMapper();
 
   public JsonNode asJson() {

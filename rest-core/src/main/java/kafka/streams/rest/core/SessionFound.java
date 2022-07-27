@@ -6,13 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.List;
 
-public record SessionFound(
-    @JsonProperty("key") Object key,
-    @JsonProperty("window") List<Window> windows
-) {
-
-  static final ObjectMapper jsonMapper = new ObjectMapper()
-      .registerModule(new JavaTimeModule());
+public record SessionFound(@JsonProperty("key") Object key, @JsonProperty("window") List<Window> windows) {
+  static final ObjectMapper jsonMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
   public JsonNode asJson() {
     return jsonMapper.valueToTree(this);

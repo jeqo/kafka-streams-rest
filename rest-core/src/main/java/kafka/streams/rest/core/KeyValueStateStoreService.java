@@ -1,7 +1,6 @@
 package kafka.streams.rest.core;
 
 public interface KeyValueStateStoreService<K> {
-
   /**
    * @return Key Value store information
    */

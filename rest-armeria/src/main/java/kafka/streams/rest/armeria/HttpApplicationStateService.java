@@ -66,15 +66,19 @@ final class HttpApplicationStateService {
 
   @Post("/threads")
   public HttpResponse addThread() {
-    return service.kafkaStreams().addStreamThread()
-        .map(id -> HttpResponse.of(HttpStatus.CREATED, MediaType.PLAIN_TEXT_UTF_8, "Thread:" + id))
-        .orElse(HttpResponse.of(HttpStatus.NOT_MODIFIED));
+    return service
+      .kafkaStreams()
+      .addStreamThread()
+      .map(id -> HttpResponse.of(HttpStatus.CREATED, MediaType.PLAIN_TEXT_UTF_8, "Thread:" + id))
+      .orElse(HttpResponse.of(HttpStatus.NOT_MODIFIED));
   }
 
   @Delete("/threads")
   public HttpResponse removeThread() {
-    return service.kafkaStreams().removeStreamThread()
-        .map(id -> HttpResponse.of(HttpStatus.OK, MediaType.PLAIN_TEXT_UTF_8, "Thread:" + id))
-        .orElse(HttpResponse.of(HttpStatus.NOT_MODIFIED));
+    return service
+      .kafkaStreams()
+      .removeStreamThread()
+      .map(id -> HttpResponse.of(HttpStatus.OK, MediaType.PLAIN_TEXT_UTF_8, "Thread:" + id))
+      .orElse(HttpResponse.of(HttpStatus.NOT_MODIFIED));
   }
 }
